@@ -1,0 +1,69 @@
+import numpy
+import random
+import matplotlib.pyplot as plt
+
+if __name__ == '__main__':
+    number_of_nodes = 100;
+    nodeIds = range(1, number_of_nodes+1)
+    parentIds = [0 for x in range(number_of_nodes)]
+    treeMaxGrade = 10
+    grades = range(2, treeMaxGrade+1)
+    minFlooding = [0 for x in grades]
+    maxFlooding = [0 for x in grades]
+    avgFlooding = [0 for x in grades]
+    number_of_rounds = 10000
+
+    for rate in [0.05, 0.1, 0.15, 0.2, 1]:
+        for grade in grades:
+            for i in range(number_of_nodes - 1):
+                parentIds[i+1] = (i // grade) + 1
+            nodeFloodCount = [0 for x in range(len(nodeIds))]
+            nodeInterests = [[0 for x in range(128)] for y in range(len(nodeIds))]
+            childInterests = [[0 for x in range(128)] for y in range(len(nodeIds))]
+            for i in range(len(nodeIds)):
+                nodeInterests[i] = numpy.random.choice([0, 1], size=128, p=[1-rate, rate])
+            for i in range(len(nodeIds) - 1, -1, -1):
+                for j in range(128):
+                    if parentIds[i] != 0:
+                        childInterests[parentIds[i]-1][j] = childInterests[parentIds[i]-1][j] | \
+                                                        nodeInterests[i][j] | childInterests[i][j]
+            for round in range(number_of_rounds):
+                eventNumber = random.randrange(128)
+                #eventNumber = (round % 128)
+                eventRaiserNode = random.randrange(number_of_nodes)+1
+                #eventRaiserNode = (round % len(nodeIds)) + 1
+                for nodeId in range(1, len(nodeIds) + 1):
+                    if eventRaiserNode == nodeId:
+                        nodeFloodCount[nodeId-1] += 1
+                    elif parentIds[eventRaiserNode - 1] == nodeId:
+                        nodeFloodCount[nodeId - 1] += 1
+                    elif childInterests[nodeId - 1][eventNumber] == 1:
+                        nodeFloodCount[nodeId - 1] += 1
+            minFlooding[grade - 2] = min(nodeFloodCount)*100.0/number_of_rounds
+            maxFlooding[grade - 2] = max(nodeFloodCount)*100.0/number_of_rounds
+            avgFlooding[grade - 2] = sum(nodeFloodCount)/len(nodeFloodCount)*100.0/number_of_rounds
+
+        #plt.plot(grades, minFlooding, label="Minimum Presence")
+
+        plt.plot(grades, avgFlooding, label=rate)
+
+        #plt.plot(grades, maxFlooding, label="Maximum Presence")
+
+    plt.xlabel('Degree of Network Tree')
+    plt.ylabel('Percentage of Presence in Flooding')
+    plt.title("Effect of Tree Degree on Flooding with Different Subscription Rate")
+    plt.ylim([0, 100])
+    plt.legend()
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+

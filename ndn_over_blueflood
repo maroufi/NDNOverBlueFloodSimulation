@@ -1,0 +1,75 @@
+import numpy
+import random
+import matplotlib.pyplot as plt
+
+if __name__ == '__main__':
+    number_of_nodes = 100
+
+    for grade in range(2, 6):
+        #nodeIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        #parentIds = [0, 1, 1, 1, 2, 2, 3, 3, 4, 4]
+        nodeIds = range(1, number_of_nodes+1)
+        parentIds = [0 for x in range(number_of_nodes)]
+
+        for i in range(number_of_nodes - 1):
+            parentIds[i + 1] = (i // grade) + 1
+        event_rate_div = 10
+        rates = [0 for x in range(event_rate_div)]
+        minFlooding = [0 for x in range(event_rate_div)]
+        maxFlooding = [0 for x in range(event_rate_div)]
+        avgFlooding = [0 for x in range(event_rate_div)]
+        number_of_rounds = 10000
+
+        for rate in range(event_rate_div):
+            rates[rate] = rate*0.1
+            nodeFloodCount = [0 for x in range(len(nodeIds))]
+            nodeInterests = [[0 for x in range(128)] for y in range(len(nodeIds))]
+            childInterests = [[0 for x in range(128)] for y in range(len(nodeIds))]
+            for i in range(len(nodeIds)):
+                nodeInterests[i] = numpy.random.choice([0, 1], size=128, p=[1-.1*rate, .1*rate])
+            for i in range(len(nodeIds) - 1, -1, -1):
+                for j in range(128):
+                    if parentIds[i] != 0:
+                        childInterests[parentIds[i]-1][j] = childInterests[parentIds[i]-1][j] | \
+                                                        nodeInterests[i][j] | childInterests[i][j]
+            for round in range(number_of_rounds):
+                #eventNumber = random.randrange(128)
+                eventNumber = (round % 128)
+                #eventRaiserNode = random.randrange(number_of_nodes)+1
+                eventRaiserNode = (round % len(nodeIds)) + 1
+                for nodeId in range(1, len(nodeIds) + 1):
+                    if eventRaiserNode == nodeId:
+                        nodeFloodCount[nodeId-1] += 1
+                    elif parentIds[eventRaiserNode - 1] == nodeId:
+                        nodeFloodCount[nodeId - 1] += 1
+                    elif childInterests[nodeId - 1][eventNumber] == 1:
+                        nodeFloodCount[nodeId - 1] += 1
+            minFlooding[rate] = min(nodeFloodCount)*100.0/number_of_rounds
+            maxFlooding[rate] = max(nodeFloodCount)*100.0/number_of_rounds
+            avgFlooding[rate] = sum(nodeFloodCount)/len(nodeFloodCount)*100.0/number_of_rounds
+
+        #plt.plot(rates, minFlooding, label="Minimum Presence")
+
+        plt.plot(rates, avgFlooding, label=grade)
+
+        #plt.plot(rates, maxFlooding, label="Maximum Presence")
+
+    plt.xlabel('Event Subscription Rate')
+    plt.ylabel('Percentage of Presence in Flooding')
+    plt.title("Effect of Subscription Rate on Flooding with Different Tree Degree")
+    #plt.title("Implementation With 6 Nodes")
+    plt.ylim([0, 100])
+    plt.legend()
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
